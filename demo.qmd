@@ -1,0 +1,296 @@
+---
+title: "ggden — DEN House-Style Charts for ggplot2"
+subtitle: "Dewan Ekonomi Nasional"
+format:
+  html:
+    toc: true
+    toc-depth: 2
+    code-fold: false
+    theme: cosmo
+    self-contained: true
+execute:
+  warning: false
+  message: false
+  fig-dpi: 300
+---
+
+## Installation
+
+Install directly from GitHub:
+
+```r
+# install.packages("remotes")  # if needed
+remotes::install_github("den-econ/ggden")
+```
+
+## Setup
+
+```{r}
+library(ggden)
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+```
+
+## 1. Palette Preview
+
+The DEN palette contains 9 colours. Access them with `den_palette()` or
+individually via `den_colors["gold"]`.
+
+```{r}
+#| fig-width: 8
+#| fig-height: 1.5
+pal <- den_palette()
+df_pal <- data.frame(
+  color = factor(names(pal), levels = names(pal)),
+  hex   = unname(pal),
+  y     = 1
+)
+
+ggplot(df_pal, aes(x = color, y = y, fill = color)) +
+  geom_tile(width = 0.9, height = 0.9) +
+  geom_text(aes(label = hex), vjust = 2.5, size = 3) +
+  scale_fill_manual(values = pal) +
+  theme_void() +
+  theme(
+    axis.text.x = element_text(size = 9, face = "bold", margin = margin(t = 4)),
+    legend.position = "none"
+  ) +
+  labs(title = "DEN Palette") +
+  coord_fixed(ratio = 0.6)
+```
+
+## 2. Line Chart — GDP Growth
+
+A multi-series line chart with `theme_den()` and `scale_color_den()`.
+Equivalent to the GDP growth chart in `fig.ipynb`.
+
+```{r}
+#| fig-width: 9
+#| fig-height: 6
+set.seed(42)
+years <- 2015:2024
+
+df_gdp <- data.frame(
+  Tahun = rep(years, 4),
+  Industri = rep(
+    c("KPK dan Alas Kaki", "TPT",
+      "Industri Manufaktur Non Migas", "Nasional"),
+    each = length(years)
+  ),
+  Pertumbuhan = c(
+    cumsum(rnorm(length(years), 3, 4)) / 5,
+    cumsum(rnorm(length(years), 2, 3)) / 5,
+    cumsum(rnorm(length(years), 4, 2)) / 5,
+    cumsum(rnorm(length(years), 5, 1)) / 5
+  )
+)
+
+ggplot(df_gdp, aes(x = Tahun, y = Pertumbuhan, colour = Industri)) +
+  geom_line(linewidth = 1.2) +
+  geom_point(size = 2) +
+  geom_hline(yintercept = 0, linetype = "dashed", colour = "grey60", alpha = 0.5) +
+  scale_x_continuous(breaks = years) +
+  scale_color_den() +
+  theme_den() +
+  labs(y = "Pertumbuhan (%)", x = NULL)
+```
+
+## 3. Dual-Panel Line Chart — COVID Disruption
+
+Two side-by-side panels showing actual GDP vs. a pre-COVID trend.
+
+```{r}
+#| fig-width: 12
+#| fig-height: 4.5
+set.seed(7)
+years2 <- 2010:2024
+
+df_dual <- data.frame(
+  Tahun = rep(years2, 2),
+  Sektor = rep(c("TPT", "KPK dan Alas Kaki"), each = length(years2)),
+  GDP = c(
+    cumsum(rnorm(length(years2), 500, 100)) + 5000,
+    cumsum(rnorm(length(years2), 300, 80))  + 3000
+  )
+)
+# simulate COVID dip
+df_dual$GDP[df_dual$Tahun == 2020] <- df_dual$GDP[df_dual$Tahun == 2020] * 0.85
+
+# pre-COVID trend (simple linear fit on 2010-2019)
+df_trend <- df_dual |>
+  filter(Tahun <= 2019) |>
+  group_by(Sektor) |>
+  summarise(
+    intercept = coef(lm(GDP ~ Tahun))[1],
+    slope     = coef(lm(GDP ~ Tahun))[2],
+    .groups   = "drop"
+  )
+
+df_trend_line <- expand.grid(Tahun = years2, Sektor = unique(df_dual$Sektor)) |>
+  left_join(df_trend, by = "Sektor") |>
+  mutate(Trend = intercept + slope * Tahun)
+
+ggplot() +
+  geom_line(data = df_dual, aes(x = Tahun, y = GDP, colour = "PDB Aktual"),
+            linewidth = 1.2) +
+  geom_point(data = df_dual, aes(x = Tahun, y = GDP, colour = "PDB Aktual"),
+             size = 1.5) +
+  geom_line(data = df_trend_line,
+            aes(x = Tahun, y = Trend, colour = "Tren Pra-COVID"),
+            linewidth = 1, linetype = "dashed", alpha = 0.8) +
+  geom_vline(xintercept = 2020, colour = "red", alpha = 0.5) +
+  facet_wrap(~Sektor, scales = "free_y") +
+  scale_x_continuous(breaks = seq(2010, 2024, 2)) +
+  scale_colour_manual(values = c(
+    "PDB Aktual"     = den_colors["gold"],
+    "Tren Pra-COVID" = den_colors["brown"]
+  )) +
+  theme_den() +
+  labs(y = "GDP (Milyar Rupiah)", x = NULL)
+```
+
+## 4. Stacked Bar Chart — Export by Region
+
+Stacked bars with percentage annotations, matching the export-by-region chart.
+
+```{r}
+#| fig-width: 10
+#| fig-height: 6
+df_export <- data.frame(
+  Year   = rep(2022:2024, each = 4),
+  Region = rep(c("USA", "EU28", "Asia", "RoW"), 3),
+  Value  = c(2.1, 1.8, 3.0, 1.0,
+             2.3, 1.9, 3.2, 1.1,
+             2.5, 2.0, 3.5, 1.2)
+)
+
+# compute share labels
+df_export <- df_export |>
+  group_by(Year) |>
+  mutate(
+    Share = Value / sum(Value),
+    Label = sprintf("%.1f%%", Share * 100),
+    ypos  = cumsum(Value) - Value / 2
+  ) |>
+  ungroup()
+
+ggplot(df_export, aes(x = factor(Year), y = Value, fill = Region)) +
+  geom_col(width = 0.7) +
+  geom_text(aes(y = ypos, label = Label),
+            colour = "white", fontface = "bold", size = 3.5) +
+  scale_fill_den() +
+  theme_den() +
+  labs(y = "Nilai ekspor (Milyar USD)", x = NULL)
+```
+
+## 5. Simple Bar Chart — Trade Values (Grid)
+
+A 3x2 faceted grid of bar charts, one per trade type and flow direction.
+
+```{r}
+#| fig-width: 10
+#| fig-height: 10
+set.seed(99)
+types  <- c("Bahan Baku", "Barang Antara", "Barang Jadi")
+flows  <- c("Impor", "Ekspor")
+
+df_trade <- expand.grid(
+  Tahun = 2022:2024,
+  Tipe  = types,
+  Flow  = flows
+) |>
+  mutate(Value = runif(n(), 1, 8))
+
+# assign label per facet
+facet_labels <- paste0(
+  "(", letters[1:6], ") ",
+  rep(flows, times = 3), " ",
+  rep(types, each = 2)
+)
+df_trade <- df_trade |>
+  mutate(
+    Facet = paste0(Flow, " ", Tipe),
+    Facet = factor(Facet, levels = paste0(
+      rep(flows, times = 3), " ", rep(types, each = 2)
+    ))
+  )
+
+ggplot(df_trade, aes(x = factor(Tahun), y = Value,
+                     fill = Flow)) +
+  geom_col(width = 0.6, show.legend = FALSE) +
+  geom_text(aes(label = sprintf("%.2f", Value)),
+            vjust = -0.3, fontface = "bold", size = 3) +
+  facet_wrap(~Facet, ncol = 2, scales = "fixed") +
+  scale_fill_manual(values = c(
+    "Impor"  = den_colors["gold"],
+    "Ekspor" = den_colors["brown"]
+  )) +
+  theme_den() +
+  labs(y = "Nilai (Miliar USD)", x = NULL)
+```
+
+## 6. Grouped Bar Chart — Import Shares
+
+Side-by-side bars comparing two years.
+
+```{r}
+#| fig-width: 10
+#| fig-height: 6
+df_share <- data.frame(
+  Partner = rep(c("CHN", "VNM", "IND", "BGD", "IDN", "MEX"), each = 2),
+  Year    = rep(c("2015", "2024"), 6),
+  Share   = c(44.0, 29.2, 11.8, 19.2, 5.1, 6.5,
+              4.4, 6.0, 5.0, 5.5, 3.8, 3.7)
+)
+df_share$Partner <- factor(df_share$Partner,
+                           levels = c("CHN", "VNM", "IND", "BGD", "IDN", "MEX"))
+
+ggplot(df_share, aes(x = Partner, y = Share, fill = Year)) +
+  geom_col(position = position_dodge(width = 0.7), width = 0.6) +
+  geom_text(
+    aes(label = sprintf("%.1f%%", Share)),
+    position = position_dodge(width = 0.7),
+    vjust = -0.4, fontface = "bold", size = 3
+  ) +
+  scale_fill_den() +
+  theme_den() +
+  labs(
+    y     = "Import Share (%)",
+    x     = NULL,
+    title = "USA Textile Import Share by Partner"
+  )
+```
+
+## 7. Using the Theme with Any ggplot
+
+`theme_den()` works as a drop-in replacement for any ggplot2 theme.
+Just add it to your plot:
+
+```{r}
+#| fig-width: 8
+#| fig-height: 5
+ggplot(mpg, aes(x = displ, y = hwy, colour = factor(cyl))) +
+  geom_point(size = 2, alpha = 0.7) +
+  geom_smooth(method = "lm", se = FALSE, linewidth = 1) +
+  scale_color_den() +
+  theme_den() +
+  labs(
+    title    = "Engine Displacement vs Highway MPG",
+    subtitle = "By number of cylinders",
+    x = "Displacement (L)",
+    y = "Highway MPG",
+    colour = NULL
+  )
+```
+
+## Quick Reference
+
+| Function | Purpose |
+|---|---|
+| `theme_den()` | Apply DEN theme to any ggplot |
+| `scale_color_den()` | DEN discrete colour scale |
+| `scale_fill_den()` | DEN discrete fill scale |
+| `den_palette(n)` | Get first `n` DEN colours |
+| `den_colors["gold"]` | Access a single named colour |
+| `den_save("file.png", p)` | Save at 300 dpi with white background |
