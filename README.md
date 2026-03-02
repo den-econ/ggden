@@ -21,6 +21,7 @@ ggplot(mtcars, aes(wt, mpg, colour = factor(cyl))) +
   scale_color_den() +
   theme_den() +
   labs(title = "Example Plot")
+# den_save("fig.png")
 ```
 
 ## Functions
