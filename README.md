@@ -35,10 +35,3 @@ ggplot(mtcars, aes(wt, mpg, colour = factor(cyl))) +
 | `den_colors` | Named colour vector |
 | `den_save()` | Save at 300 dpi |
 
-## Documentation
-
-See `demo.qmd` for a full walkthrough with all chart types — render it with:
-
-```bash
-quarto render demo.qmd
-```
