@@ -1,6 +1,6 @@
 Package: ggden
 Title: DEN House-Style Theme for ggplot2
-Version: 0.1.0
+Version: 1.0.0
 Authors@R:
     person("Dewan Ekonomi Nasional", email = "info@dewanekonomi.go.id",
            role = c("aut", "cre"))

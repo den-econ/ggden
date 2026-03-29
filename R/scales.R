@@ -52,7 +52,7 @@ den_pal <- function() {
   function(n) {
     pal <- unname(den_palette())
     if (n > length(pal)) {
-      warning("n exceeds DEN palette size (9). Recycling colours.")
+      warning("n exceeds DEN palette size (12). Recycling colours.")
       return(rep_len(pal, n))
     }
     pal[seq_len(n)]
