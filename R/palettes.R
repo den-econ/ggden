@@ -20,11 +20,11 @@ den_palette <- function(n = NULL) {
     tan         = "#A19574",
     dark_grey   = "#3A3A3A",
     deep_amber  = "#935200",
-    light_gold  = "#F8E69B",
-    warm_sand   = "#C3986D",
-    rose_brown  = "#B58B80",
+    slate_blue  = "#4A6D7C",
+    muted_teal  = "#5B8A72",
+    dusty_rose  = "#A8687A",
     rust        = "#9F522C",
-    olive_tan   = "#8B8679"
+    light_gold  = "#F8E69B"
   )
   if (is.null(n)) return(pal)
   if (n > length(pal)) {
@@ -48,9 +48,9 @@ den_colors <- c(
   tan         = "#A19574",
   dark_grey   = "#3A3A3A",
   deep_amber  = "#935200",
-  light_gold  = "#F8E69B",
-  warm_sand   = "#C3986D",
-  rose_brown  = "#B58B80",
+  slate_blue  = "#4A6D7C",
+  muted_teal  = "#5B8A72",
+  dusty_rose  = "#A8687A",
   rust        = "#9F522C",
-  olive_tan   = "#8B8679"
+  light_gold  = "#F8E69B"
 )
