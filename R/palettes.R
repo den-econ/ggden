@@ -34,6 +34,25 @@ den_palette <- function(n = NULL) {
   pal[seq_len(n)]
 }
 
+#' Get a DEN colour by position
+#'
+#' Returns the \emph{i}-th colour in the DEN palette (1-based),
+#' matching Stata's \code{den1}–\code{den12} colour names.
+#'
+#' @param i Integer position (1–12).
+#' @return A single hex colour string.
+#' @export
+#' @examples
+#' den_color(1)   # gold
+#' den_color(3)   # red
+den_color <- function(i) {
+  pal <- den_palette()
+  if (i < 1 || i > length(pal)) {
+    stop("i must be between 1 and ", length(pal), ", got ", i)
+  }
+  unname(pal[i])
+}
+
 #' Named DEN colours
 #'
 #' A named character vector for easy single-colour access, e.g.
