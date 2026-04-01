@@ -73,3 +73,29 @@ den_colors <- c(
   rust        = "#9F522C",
   light_gold  = "#F8E69B"
 )
+
+#' Supplementary DEN colours (manual use)
+#'
+#' 16 additional colours from the DEN PPT template and team preferences.
+#' Not part of the auto-cycled palette. Access by name, e.g.
+#' \code{den_supplementary["cream"]}.
+#'
+#' @export
+den_supplementary <- c(
+  cream        = "#FBEEC9",
+  amber_gold   = "#F0A22E",
+  ochre        = "#C87D0E",
+  burnt_orange = "#C17529",
+  raw_amber    = "#91581F",
+  sand         = "#C3986D",
+  caramel      = "#A27242",
+  clay         = "#A5644E",
+  chocolate    = "#7C4B3B",
+  espresso     = "#4E3B30",
+  dark_red     = "#820000",
+  rose_brown   = "#B58B80",
+  olive        = "#7C7154",
+  medium_grey  = "#7F7F7F",
+  steel        = "#70848F",
+  navy_slate   = "#3E5064"
+)
