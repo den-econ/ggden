@@ -96,7 +96,45 @@ ggplot(df_gdp, aes(x = Tahun, y = Pertumbuhan, colour = Industri)) +
   labs(y = "Pertumbuhan (%)", x = NULL)
 ```
 
-## 3. Dual-Panel Line Chart — COVID Disruption
+## 3. Time Series — Last-Value Labels and Date Ticks
+
+With a `Date` x-axis, `theme_den()` labels the last value of each line in
+the line's colour and anchors the x ticks at the last observation
+(here August 2026), stepping backward.
+
+```{r}
+#| fig-width: 9
+#| fig-height: 5
+set.seed(1)
+dates <- seq(as.Date("2018-08-01"), as.Date("2026-08-01"), by = "month")
+df_macro <- data.frame(
+  Tanggal = rep(dates, 3),
+  Seri    = rep(c("Inflasi", "BI Rate", "Pertumbuhan Kredit"), each = length(dates)),
+  Nilai   = c(cumsum(rnorm(length(dates), 0, 0.2)) + 3,
+              cumsum(rnorm(length(dates), 0, 0.1)) + 5,
+              cumsum(rnorm(length(dates), 0, 0.3)) + 8)
+)
+
+ggplot(df_macro, aes(Tanggal, Nilai, colour = Seri)) +
+  geom_line(linewidth = 1) +
+  scale_color_den() +
+  theme_den(last_label = scales::label_percent(accuracy = 0.1, scale = 1)) +
+  labs(y = "%", x = NULL)
+```
+
+Labels and ticks can be switched off or customised:
+
+```{r}
+#| fig-width: 9
+#| fig-height: 5
+ggplot(df_macro, aes(Tanggal, Nilai, colour = Seri)) +
+  geom_line(linewidth = 1) +
+  scale_color_den() +
+  theme_den(last_label = FALSE, date_breaks = "1 year") +
+  labs(y = "%", x = NULL)
+```
+
+## 4. Dual-Panel Line Chart — COVID Disruption
 
 Two side-by-side panels showing actual GDP vs. a pre-COVID trend.
 
@@ -150,7 +188,7 @@ ggplot() +
   labs(y = "GDP (Milyar Rupiah)", x = NULL)
 ```
 
-## 4. Stacked Bar Chart — Export by Region
+## 5. Stacked Bar Chart — Export by Region
 
 Stacked bars with percentage annotations, matching the export-by-region chart.
 
@@ -184,7 +222,7 @@ ggplot(df_export, aes(x = factor(Year), y = Value, fill = Region)) +
   labs(y = "Nilai ekspor (Milyar USD)", x = NULL)
 ```
 
-## 5. Simple Bar Chart — Trade Values (Grid)
+## 6. Simple Bar Chart — Trade Values (Grid)
 
 A 3x2 faceted grid of bar charts, one per trade type and flow direction.
 
@@ -230,7 +268,7 @@ ggplot(df_trade, aes(x = factor(Tahun), y = Value,
   labs(y = "Nilai (Miliar USD)", x = NULL)
 ```
 
-## 6. Grouped Bar Chart — Import Shares
+## 7. Grouped Bar Chart — Import Shares
 
 Side-by-side bars comparing two years.
 
@@ -262,7 +300,7 @@ ggplot(df_share, aes(x = Partner, y = Share, fill = Year)) +
   )
 ```
 
-## 7. Using the Theme with Any ggplot
+## 8. Using the Theme with Any ggplot
 
 `theme_den()` works as a drop-in replacement for any ggplot2 theme.
 Just add it to your plot:
@@ -288,7 +326,11 @@ ggplot(mpg, aes(x = displ, y = hwy, colour = factor(cyl))) +
 
 | Function | Purpose |
 |---|---|
-| `theme_den()` | Apply DEN theme to any ggplot |
+| `theme_den()` | Apply DEN theme to any ggplot (adds last-value labels and date ticks) |
+| `theme_den_base()` | Styling only, e.g. for `theme_set()` |
+| `den_last_label()` | Customise last-value labels |
+| `geom_last_label()` | Add last-value labels by hand |
+| `breaks_from_last()` | Date breaks anchored at the last observation |
 | `scale_color_den()` | DEN discrete colour scale |
 | `scale_fill_den()` | DEN discrete fill scale |
 | `den_palette(n)` | Get first `n` DEN colours |
